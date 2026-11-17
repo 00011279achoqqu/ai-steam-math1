@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Profile rules (Admin edits maxMB directly in Firebase Console; client cannot raise its own maxMB)
+    function isValidUser(data, userId) {
+      return data.uid == userId &&
+        data.createdAt is string && data.createdAt.size() <= 64 &&
+        (!('streak' in data) || (data.streak is number && data.streak >= 0)) &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 150)) &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 200)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500)) &&
+        (!('lastStudyDate' in data) || (data.lastStudyDate is string && data.lastStudyDate.size() <= 64)) &&
+        (!('maxMB' in data) || (data.maxMB is number && data.maxMB > 0 && data.maxMB <= 102400)) &&
+        (!('usedBytes' in data) || (data.usedBytes is number && data.usedBytes >= 0)) &&
+        (!('usedMB' in data) || (data.usedMB is number && data.usedMB >= 0)) &&
+        (!('updatedAt' in data) || data.updatedAt is string || data.updatedAt is timestamp);
+    }
+
+    function isValidLibraryDoc(data, userId) {
+      return data.userId == userId &&
+        data.filename is string && data.filename.size() > 0 && data.filename.size() <= 250 &&
+        data.title is string && data.title.size() <= 250 &&
+        data.content is string && data.content.size() <= 921600 &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+        (!('name' in data) || (data.name is string && data.name.size() <= 250)) &&
+        (!('type' in data) || (data.type is string && data.type.size() <= 120)) &&
+        (!('mimeType' in data) || (data.mimeType is string && data.mimeType.size() <= 120)) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+        (!('byteSize' in data) || (data.byteSize is number && data.byteSize >= 0 && data.byteSize <= 921600)) &&
+        (!('size' in data) || (data.size is number && data.size >= 0 && data.size <= 921600)) &&
+        (!('updated' in data) || (data.updated is string && data.updated.size() <= 64)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64)) &&
+        (!('updatedAt' in data) || data.updatedAt is string || data.updatedAt is timestamp);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming(), userId) &&
+        (!('maxMB' in incoming()) || incoming().maxMB == 20);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming(), userId) &&
+        (!('uid' in existing()) || incoming().uid == existing().uid) &&
+        (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt) &&
+        ((!('maxMB' in existing()) && (!('maxMB' in incoming()) || incoming().maxMB == 20)) ||
+         (('maxMB' in existing()) && incoming().maxMB == existing().maxMB));
+      allow delete: if isOwner(userId);
+
+      // Subcollection: user's personal library documents (strictly isolated per user, max 900KB/doc)
+      match /library/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(docId) && isValidLibraryDoc(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(docId) && isValidLibraryDoc(incoming(), userId) &&
+          (!('userId' in existing()) || incoming().userId == existing().userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection: quizHistory
+      match /quizHistory/{historyId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(historyId) &&
+          incoming().userId == userId &&
+          incoming().score is number &&
+          incoming().correct is number &&
+          incoming().total is number;
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

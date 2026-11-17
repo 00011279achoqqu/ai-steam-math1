@@ -1,0 +1,8 @@
+{
+  "name": "Remix AuraLearn — Thư viện Tri thức \u0026 Gia sư AI",
+  "description": "Nền tảng học tập thông minh với hệ thống lưu trữ tri thức library.txt, gia sư AI giải đáp thắc mắc và luyện tập quiz.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

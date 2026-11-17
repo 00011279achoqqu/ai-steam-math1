@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with study metrics and streak",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "streak": { "type": "number" },
+        "lastStudyDate": { "type": "string" },
+        "maxMB": { "type": "number" },
+        "usedBytes": { "type": "number" },
+        "usedMB": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "maxMB", "usedBytes", "usedMB", "createdAt"]
+    },
+    "LibraryDocument": {
+      "title": "LibraryDocument",
+      "description": "Knowledge document stored in the user's personal library without heavy Base64 payloads",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "filename": { "type": "string" },
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "category": { "type": "string" },
+        "content": { "type": "string" },
+        "byteSize": { "type": "number" },
+        "size": { "type": "number" },
+        "mimeType": { "type": "string" },
+        "updated": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "filename", "name", "title", "type", "content", "byteSize", "createdAt"]
+    },
+    "QuizHistory": {
+      "title": "QuizHistory",
+      "description": "Completed quiz attempt records",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "score": { "type": "number" },
+        "correct": { "type": "number" },
+        "total": { "type": "number" },
+        "date": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "score", "correct", "total", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document keyed by auth UID"
+    },
+    "/users/{userId}/library/{docId}": {
+      "schema": "LibraryDocument",
+      "description": "Personal knowledge documents belonging strictly to this user"
+    },
+    "/users/{userId}/quizHistory/{historyId}": {
+      "schema": "QuizHistory",
+      "description": "User quiz attempts and scores"
+    }
+  }
+}

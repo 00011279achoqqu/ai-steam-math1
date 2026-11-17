@@ -1,0 +1,10 @@
+{
+  "projectId": "ai-steam-math",
+  "appId": "1:154534909864:web:a4216114e5c29fc066ef9d",
+  "apiKey": "AIzaSyDkiBpkRApQ6_ApFFJhwGN4Shl4ZxsAbXM",
+  "authDomain": "ai-steam-math.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "ai-steam-math.firebasestorage.app",
+  "messagingSenderId": "154534909864",
+  "measurementId": "G-L6TFJMZHCT"
+}
